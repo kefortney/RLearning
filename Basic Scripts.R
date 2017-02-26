@@ -1,15 +1,27 @@
+library(ggplot2)
+library(plyr)
+library(datasets)
+
+
 # clean list
 rm(list=ls())
-# load file
-housing.data <- read.csv("~/Desktop/R/BurlingtonPropertyDetails.csv", header = TRUE)
-view data structure
-str(housing.data)
+
+
+# load iris data set
+data("iris")
+
+
+# load a csv file
+housing.data <- read.csv("~/Desktop/RLearning/BurlingtonPropertyDetails.csv", header = TRUE)
+
+# view data structure
+str(iris)
 
 #  -  handy to know where your working directory is set  - Read more at: http://scq.io/AVkLvbhX#gs.njsBe5Y 
 getwd()
 
 # changing the path that you get as a result of this function, maybe to the folder in which you have stored your data set - Read more at: http://scq.io/AVkLvbhX#gs.njsBe5Y
-setwd("<location of your dataset>") 
+setwd("C:/User/kefort/Desktop") 
 
 # set values as dates, default yyyy-mm-dd back into the dataframe
 pricing$Sale.Date <- as.Date(pricing$Sale.Date)
@@ -18,21 +30,11 @@ pricing$Sale.Date <- as.Date(pricing$Sale.Date)
 which(pricing.2001$Sale.Price == 470000)
 # 2001-07-27  254400.00 median 230000.00
 
-start <- as.Date("2001-01-01")
-end   <- as.Date("2002-01-01")
-pricing.2001 <- sqldf(sprintf("select * from pricing where [Sale.Date] between %i and %i",start,end))
-summary(pricing.2001)
-
 # ggplot2 stuff
 ggplot(pricing2, aes(`Sale Date`, `Sale Price`, color = `Deed Type`)) +
   geom_point() 
 
-# htmlwidgets
-install.packages("htmlwidgets")
 
-install.packages("leaflet")
-
-install.packages("tilegramsR")
 
 pricing %>%
   group_by(Deed.Type) %>%
@@ -106,11 +108,6 @@ read_lines("~/Desktop/R/ProperySalesPrice.csv")
 # read a csv file into a single string
 read_file("~/Desktop/R/ProperySalesPrice.csv")
 
-install.packages("jsonlite")
-
-install.packages("broom")
-
-install.packages("tidytext")
 
 
 
