@@ -12,7 +12,7 @@ data("iris")
 
 
 # load a csv file
-housing.data <- read.csv("~/Desktop/RLearning/BurlingtonPropertyDetails.csv", header = TRUE)
+housing.data <- read.csv("C:/Users/kefor/Desktop/RLearning/BurlingtonPropertyDetails.csv", header = TRUE)
 
 # view data structure
 str(iris)
@@ -21,7 +21,7 @@ str(iris)
 getwd()
 
 # changing the path that you get as a result of this function, maybe to the folder in which you have stored your data set - Read more at: http://scq.io/AVkLvbhX#gs.njsBe5Y
-setwd("C:/User/kefort/Desktop") 
+setwd("C:/Users/kefor/Desktop") 
 
 # set values as dates, default yyyy-mm-dd back into the dataframe
 pricing$Sale.Date <- as.Date(pricing$Sale.Date)
