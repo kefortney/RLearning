@@ -67,6 +67,8 @@ wholedf$Grade[wholedf$Grade == 'GOOD PLUS' | wholedf$Grade == 'GOOD MINUS' ] <- 
 wholedf$Grade[wholedf$Grade == 'VRYGOODPLUS' | wholedf$Grade == 'VRYGOODMINUS' ] <- 'VERY GOOD'
 wholedf$Grade[wholedf$Grade == 'CUSTOM MINUS' | wholedf$Grade == 'CUSTOM PLUS'| wholedf$Grade == 'CUSTOM'] <- 'AVERAGE'
 wholedf$Grade[wholedf$Grade == 'POOR PLUS' | wholedf$Grade == 'POOR MINUS'] <- 'POOR'
+
+
 ```
 
 
@@ -97,6 +99,10 @@ ggplot(wholedf, aes(PercentFinished, SalePrice, colour = LandUse)) +
   scale_y_continuous(labels = dollar) +
   facet_grid(.~LandUse)  
 ```
+```{r}
+wholedf$Grade <- factor(wholedf$Grade)
+wholedf$Grade
+```
 
 ### Create Train/Test Datasets
 Split the dataset by if there is a price in SalePrice or not
@@ -107,10 +113,10 @@ test <- subset(wholedf, is.na(wholedf$SalePrice) )
 
 ```{r}
 # Set a random seed
-set.seed(500)
+set.seed(800)
 
 # Build the model (note: not all possible variables are used)
-rf_model <- randomForest(factor(SalePrice) ~ CurrentAcres + TotalGrossArea + FinishedArea + PercentFinished + NumofRooms + NumofBedrooms + Depreciation, data = train)
+rf_model <- randomForest(factor(SalePrice) ~ CurrentAcres + TotalGrossArea + FinishedArea + PercentFinished + NumofRooms + NumofBedrooms + Depreciation + Grade, data = train)
 
 ```
 
@@ -138,19 +144,80 @@ ggplot(rankImportance, aes(x = reorder(Variables, Importance),
 ```{r}
 # Predict using the test set
 prediction <- predict(rf_model, test)
-
-eval_model(prediction, mtcars_bin$am)
 ```
 
 ```{r}
 test$SalePrice <- prediction
+full  <- rbind(train, test)
+full
 ```
 
 ```{r}
-wholedf <- subset(wholedf, c("AccountNumber","ParcelID","StreetNumber","StreetName","Unit","CuO1LastName","CuO1FirstName","LandUse","CurrentAcres","TotalGrossArea","FinishedArea","CurrentValue","CurrentLandValue","CurrentYardItemsValue","CurrentBuildingValue","BuildingType","HeatFuel","HeatType","Grade","YearBlt","SaleDate","SalePrice","NumofRooms","NumofBedrooms","Baths","NumofUnits","ZoningCode","Foundation","Depreciation","PropertyCenterPoint"))
+preProcess=c("center", "scale")
+```
+```{r}
+# Linear Discriminant Analysis
+set.seed(seed)
+fit.lda <- train(diabetes~., data=dataset, method="lda", metric=metric, preProc=c("center", "scale"), trControl=control)
+# Logistic Regression
+set.seed(seed)
+fit.glm <- train(diabetes~., data=dataset, method="glm", metric=metric, trControl=control)
+# GLMNET
+set.seed(seed)
+fit.glmnet <- train(diabetes~., data=dataset, method="glmnet", metric=metric, preProc=c("center", "scale"), trControl=control)
+# SVM Radial
+set.seed(seed)
+fit.svmRadial <- train(diabetes~., data=dataset, method="svmRadial", metric=metric, preProc=c("center", "scale"), trControl=control, fit=FALSE)
+# kNN
+set.seed(seed)
+fit.knn <- train(diabetes~., data=dataset, method="knn", metric=metric, preProc=c("center", "scale"), trControl=control)
+# Naive Bayes
+set.seed(seed)
+fit.nb <- train(diabetes~., data=dataset, method="nb", metric=metric, trControl=control)
+# CART
+set.seed(seed)
+fit.cart <- train(diabetes~., data=dataset, method="rpart", metric=metric, trControl=control)
+# C5.0
+set.seed(seed)
+fit.c50 <- train(diabetes~., data=dataset, method="C5.0", metric=metric, trControl=control)
+# Bagged CART
+set.seed(seed)
+fit.treebag <- train(diabetes~., data=dataset, method="treebag", metric=metric, trControl=control)
+# Random Forest
+set.seed(seed)
+fit.rf <- train(diabetes~., data=dataset, method="rf", metric=metric, trControl=control)
+# Stochastic Gradient Boosting (Generalized Boosted Modeling)
+set.seed(seed)
+fit.gbm <- train(diabetes~., data=dataset, method="gbm", metric=metric, trControl=control, verbose=FALSE)
+You can see a good mixt
+```
+```{r}
+results <- resamples(list(lda=fit.lda, logistic=fit.glm, glmnet=fit.glmnet,
+	svm=fit.svmRadial, knn=fit.knn, nb=fit.nb, cart=fit.cart, c50=fit.c50,
+	bagging=fit.treebag, rf=fit.rf, gbm=fit.gbm))
+# Table comparison
+summary(results)
+```
 
-# Show Grade counts by LandUse
-table(wholedf$HeatFuel, wholedf$LandUse)
+```{r}
+
+
+# boxplot comparison
+bwplot(results)
+# Dot-plot comparison
+dotplot(results)
+1
+2
+3
+4
+# boxplot comparison
+bwplot(results)
+# Dot-plot comparison
+dotplot(results)
+```
+
+```{r}
+#wholedf <- subset(wholedf, c("AccountNumber","ParcelID","StreetNumber","StreetName","Unit","CuO1LastName","CuO1FirstName","LandUse","CurrentAcres","TotalGrossArea","FinishedArea","CurrentValue","CurrentLandValue","CurrentYardItemsValue","CurrentBuildingValue","BuildingType","HeatFuel","HeatType","Grade","YearBlt","SaleDate","SalePrice","NumofRooms","NumofBedrooms","Baths","NumofUnits","ZoningCode","Foundation","Depreciation","PropertyCenterPoint"))
 ```
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
