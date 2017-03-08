@@ -1,16 +1,18 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output: 
+  flexdashboard::flex_dashboard:
+    vertical_layout: scroll
 ---
-# Machine Learning with Burlington Housing Data
+### Machine Learning with Burlington Housing Data
 The city of Burlington in Vermont keeps an open dataset for anyone to explore. In this case the goal is to add sale prices for those that do not have it ith machine learning and then decided where I want to explore the data further.
 ```{r}
 rm(list=ls())
-library('ggplot2') # visualization
-library('scales') # visualization
-library('dplyr') # data manipulation
-library('mice') # imputation
-library('randomForest') # classification algorithm
+library(ggplot2) # visualization
+library(scales) # visualization
+library(dplyr) # data manipulation
+library(mice) # imputation
+library(randomForest) # classification algorithm
 library(flexdashboard)
 ```
 Verify the Structure of the dataframe
@@ -18,27 +20,30 @@ Verify the Structure of the dataframe
 wholedf <- read.csv("C:/Users/kefor/Desktop/RLearning/City_of_Burlington_Property_Details.csv", header = TRUE)
 dim(wholedf)
 ```
-# Data Structure
+### Data Structure
 First it makes sense to take a look at the structure of the data and see what kind of variables it includes.
 ```{r}
 str(wholedf)
 ```
-## Null Values
+### Null Values
 See how many Null values are in the dataset and if anything needs to be filled in.
 ```{r}
 colSums(sapply(wholedf, is.na))
 ```
-## Residential
+### Residential
 Cut the data down to just include certain subsets which are just residential properties
 ```{r}
-wholedf <- subset(wholedf, LandUse == "Single Family" | LandUse == "2 Family" | LandUse == "3 Family" | LandUse == "4 Family" | LandUse == "Apartments 5+Units" | LandUse == "Condo")
+wholedf <- subset(wholedf, LandUse == "Single Family" | LandUse == "2 Family" | LandUse == "3 Family"| LandUse == "4 Family" | LandUse == "Apartments 5+Units")
+#wholedf <- subset(wholedf, LandUse == "Single Family" | LandUse == "2 Family" | LandUse == "3 Family" | LandUse == "4 Family" | LandUse == "Apartments 5+Units" | LandUse == "Condo")
 ```
-## Remove Features
+### Remove Features
 Some of the data in this dataframe is not going to be useful in figuring out the saleprice.  For those we are going to remove what we don't need. Dim allows you to verify that the number of columns has dropped
 ```{r}
 (wholedf <- wholedf[,c(1,2,4,6,8,9,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,31,32,33,34,35,36,37,38)])
+dim(wholedf)
 ```
-## Remove SalePrice Outliers
+### Remove SalePrice Outliers
+For some of the SalePrice values there are zeros, which in this case refers to missing data.  A quick function replaces zeros with "NA" so those values will be automatically discarded when plotted and allow us to seperate it later when it come to splitting it into a training and a testing dataset.
 
 ```{r}
 summary(wholedf$SalePrice)
@@ -49,33 +54,40 @@ require(scales)
 qplot(SalePrice, data=wholedf, geom="histogram",bins=800) + 
   scale_x_continuous(labels = dollar)
 ```
+### Sale Price Boundries
+Again outliers are a problem so removing the upper edge is useful in our analysis. Perhaps after running this whole thing I may end up going back to cut out more than 2 Family houses to get a better predictive model for what is interesting to me.
 ```{r}
-dim(wholedf)
+wholedf <- subset(wholedf, wholedf$SalePrice < 2000000 | is.na(wholedf$SalePrice) )
 ```
 ```{r}
-wholedf <- subset(wholedf, wholedf$SalePrice < 3000000 | is.na(wholedf$SalePrice) )
+wholedf$Grade[wholedf$Grade == 'AVERAGE PLUS' | wholedf$Grade == 'AVERAGEMINUS'] <- 'AVERAGE'
+wholedf$Grade[wholedf$Grade == 'EXCLT PLUS' | wholedf$Grade == 'EXCLNT MINUS' ] <- 'EXCELLENT'
+wholedf$Grade[wholedf$Grade == 'FAIR PLUS' | wholedf$Grade == 'FAIR MINUS' ] <- 'FAIR'
+wholedf$Grade[wholedf$Grade == 'GOOD PLUS' | wholedf$Grade == 'GOOD MINUS' ] <- 'GOOD'
+wholedf$Grade[wholedf$Grade == 'VRYGOODPLUS' | wholedf$Grade == 'VRYGOODMINUS' ] <- 'VERY GOOD'
+wholedf$Grade[wholedf$Grade == 'CUSTOM MINUS' | wholedf$Grade == 'CUSTOM PLUS'| wholedf$Grade == 'CUSTOM'] <- 'AVERAGE'
+wholedf$Grade[wholedf$Grade == 'POOR PLUS' | wholedf$Grade == 'POOR MINUS'] <- 'POOR'
+```
 
-dim(wholedf)
 
-qplot(SalePrice, data=wholedf, geom="histogram",bins=200) + 
-  scale_x_continuous(labels = dollar)
-```
-```{r}
-dim(wholedf)
-```
 
 ```{r}
-ggplot(wholedf, aes((CurrentValue < 7500000), FinishedArea, colour = LandUse)) + 
-  geom_point() +
-  scale_x_continuous(labels = dollar) +
-  scale_y_continuous(labels = comma)
+ggplot(wholedf, aes(x = LandUse, y = SalePrice, fill = factor(Grade))) +
+  geom_boxplot() +
+  scale_y_continuous(labels=dollar_format()) 
 ```
-## Feature Engineering
+
+### Feature Engineering
 Time to make some new features that will be useful in determing the sale price
 ```{r}
 # Create a new variable
 wholedf$PercentFinished <- wholedf$FinishedArea / wholedf$TotalGrossArea
 wholedf$PercentBuildingtoTotal <- wholedf$CurrentBuildingValue / wholedf$CurrentValue
+```
+
+```{r}
+ggplot(wholedf, aes(Grade, fill = LandUse)) +
+  geom_bar()
 ```
 
 ```{r}
@@ -86,7 +98,7 @@ ggplot(wholedf, aes(PercentFinished, SalePrice, colour = LandUse)) +
   facet_grid(.~LandUse)  
 ```
 
-## Create Train/Test Datasets
+### Create Train/Test Datasets
 Split the dataset by if there is a price in SalePrice or not
 ```{r}
 train <- subset(wholedf, wholedf$SalePrice > 0 )
@@ -98,7 +110,8 @@ test <- subset(wholedf, is.na(wholedf$SalePrice) )
 set.seed(500)
 
 # Build the model (note: not all possible variables are used)
-rf_model <- randomForest(factor(SalePrice) ~ CurrentAcres + TotalGrossArea + FinishedArea + PercentFinished + CurrentValue, data = train)
+rf_model <- randomForest(factor(SalePrice) ~ CurrentAcres + TotalGrossArea + FinishedArea + PercentFinished + NumofRooms + NumofBedrooms + Depreciation, data = train)
+
 ```
 
 
@@ -126,13 +139,11 @@ ggplot(rankImportance, aes(x = reorder(Variables, Importance),
 # Predict using the test set
 prediction <- predict(rf_model, test)
 
-# Save the solution to a dataframe with two columns: PassengerId and Survived (prediction)
-solution <- data.frame(ParcelID = test$ParcelID, SalePrice = prediction)
+eval_model(prediction, mtcars_bin$am)
+```
 
-prediction
-
-# Write the solution to file
-#write.csv(solution, file = 'rf_mod_Solution.csv', row.names = F)
+```{r}
+test$SalePrice <- prediction
 ```
 
 ```{r}
