@@ -101,6 +101,7 @@ ggplot(wholedf, aes(PercentFinished, SalePrice, colour = LandUse)) +
 ```
 ```{r}
 wholedf$Grade <- factor(wholedf$Grade)
+#model.matrix
 wholedf$Grade
 ```
 
@@ -117,6 +118,7 @@ set.seed(800)
 
 # Build the model (note: not all possible variables are used)
 rf_model <- randomForest(factor(SalePrice) ~ CurrentAcres + TotalGrossArea + FinishedArea + PercentFinished + NumofRooms + NumofBedrooms + Depreciation + Grade, data = train)
+varImpPlot(rf_model)
 
 ```
 
