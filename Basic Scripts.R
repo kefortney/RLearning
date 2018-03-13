@@ -2,7 +2,7 @@ library(ggplot2)
 library(plyr)
 library(datasets)
 
-
+install.packages("dygraphs")
 # clean list
 rm(list=ls())
 

@@ -15,6 +15,7 @@ library(mice) # imputation
 library(randomForest) # classification algorithm
 library(flexdashboard)
 ```
+
 Verify the Structure of the dataframe
 ```{r}
 wholedf <- read.csv("C:/Users/kefor/Desktop/RLearning/City_of_Burlington_Property_Details.csv", header = TRUE)

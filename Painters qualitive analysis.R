@@ -19,6 +19,13 @@ school.freq <- table(school)
 school.freq
 # display table frequency
 
+
+grep("^R", painters, value = TRUE)
+
+attach(mtcars)
+aggdata <-aggregate(mtcars$disp,by=list(cyl), FUN=mean)
+print(aggdata)
+
 cbind(school.freq) 
 # We apply the cbind function to print the result in column format
 
